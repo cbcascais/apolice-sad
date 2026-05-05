@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apólice 10102060 — Sport Algés e Dafundo</title>
+
+<!-- MSAL (Microsoft Authentication Library) -->
+<script src="https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js"></script>
+<!-- PDF.js for reading PDFs downloaded from SharePoint -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+<style>
+:root { color-scheme: light; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#eef2f7;color:#1a202c;min-height:100vh;font-size:13px}
+
+/* Login overlay */
+#login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1a365d,#2b4d8e);
+  display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-card{background:#fff;border-radius:16px;padding:40px 48px;text-align:center;
+  max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card h1{font-size:20px;color:#1a365d;margin-bottom:4px}
+.login-card p{color:#64748b;font-size:13px;margin-bottom:28px;line-height:1.5}
+.login-logo{font-size:48px;margin-bottom:16px}
+.btn-login{background:#0078d4;color:#fff;border:none;border-radius:10px;
+  padding:13px 32px;font-size:14px;font-weight:700;cursor:pointer;width:100%;
+  transition:.15s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-login:hover{background:#006cbd}
+.btn-login:disabled{opacity:.6;cursor:wait}
+.login-note{font-size:11px;color:#94a3b8;margin-top:14px;line-height:1.4}
+.login-err{color:#dc2626;font-size:12px;margin-top:10px;display:none}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#1a365d,#2b4d8e);color:#fff;padding:12px 18px}
+.hdr-row{display:flex;justify-content:space-between;align-items:center}
+.hdr-title{font-size:15px;font-weight:700}
+.hdr-sub{font-size:11px;opacity:.8;margin-top:2px}
+.hdr-btns{display:flex;gap:7px;align-items:center}
+.btn{border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;padding:6px 13px;transition:.15s}
+.btn-ghost{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-ghost:hover{background:rgba(255,255,255,.25)}
+.btn-white{background:#fff;color:#1a365d}
+.btn-white:hover{background:#e8effa}
+.btn-danger{background:#dc2626;color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.user-pill{font-size:11px;opacity:.75;padding:4px 8px;background:rgba(255,255,255,.15);
+  border-radius:5px;display:none}
+
+/* Nav tabs */
+.nav{display:flex;gap:0;background:#fff;border-bottom:2px solid #e2e8f0;padding:0 18px;overflow-x:auto}
+.nav-tab{padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#64748b;
+  border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.nav-tab.act{color:#1a365d;border-bottom-color:#1a365d}
+.nav-tab:hover{color:#1a365d}
+.badge-pill{display:inline-block;background:#dc2626;color:#fff;border-radius:10px;
+  padding:1px 6px;font-size:10px;margin-left:4px;vertical-align:middle}
+
+/* Panels */
+.panel{display:none;padding:14px 18px}
+.panel.act{display:block}
+
+/* Summary cards */
+.sc-row{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:14px}
+.sc{background:#fff;border-radius:9px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.sc .lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.4px}
+.sc .val{font-size:22px;font-weight:800;margin-top:3px;line-height:1}
+.sc.blue .val{color:#1a365d}.sc.green .val{color:#16a34a}
+.sc.red .val{color:#dc2626}.sc.purple .val{color:#7c3aed}.sc.amber .val{color:#d97706}
+
+/* Tables */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;text-transform:uppercase;color:#94a3b8;font-weight:700;
+  padding:6px 8px;text-align:left;border-bottom:2px solid #e2e8f0;background:#f8fafc}
+.tbl td{padding:6px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tbl tr:hover td{background:#fafbfc}
+.tbl tr.inc td{background:#f0fdf4}.tbl tr.exc td{background:#fef2f2}
+.tbl tr.alert td{background:#fffbeb}
+.tbl tr.inc td:first-child{border-left:3px solid #16a34a}
+.tbl tr.exc td:first-child{border-left:3px solid #dc2626}
+.tbl tr.alert td:first-child{border-left:3px solid #d97706}
+.tbl-wrap{background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:14px}
+.tbl-title{padding:10px 14px;font-weight:700;font-size:13px;border-bottom:1px solid #e2e8f0;
+  display:flex;justify-content:space-between;align-items:center;background:#f8fafc}
+
+/* Tags */
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
+.tag-in{background:#dcfce7;color:#15803d}.tag-ex{background:#fee2e2;color:#dc2626}
+.tag-ok{background:#eff6ff;color:#1d4ed8}.tag-warn{background:#fef3c7;color:#92400e}
+.tag-grey{background:#f1f5f9;color:#475569}
+
+/* Activity cards */
+.act-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.act-card{background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden}
+.act-card-hdr{padding:11px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.act-card-hdr .name{font-weight:700;color:#1a365d;font-size:13px}
+.act-card-hdr .meta{font-size:11px;color:#94a3b8;margin-top:2px}
+.act-card-body{padding:12px 14px}
+.act-stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9}
+.act-stat:last-child{border-bottom:none}
+.act-stat-lbl{color:#64748b}
+.act-stat-val{font-weight:700}
+
+/* History */
+.hist-item{background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.07);
+  margin-bottom:10px;overflow:hidden}
+.hist-hdr{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;cursor:pointer}
+.hist-hdr:hover{background:#f1f5f9}
+.hist-hdr .date{font-size:11px;color:#94a3b8}
+.hist-body{padding:12px 14px;display:none}
+.hist-body.open{display:block}
+
+/* Search & filters */
+.filter-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.search-in{flex:1;min-width:160px;padding:7px 12px;border:1px solid #cbd5e1;border-radius:7px;
+  font-size:12px;outline:none}
+.search-in:focus{border-color:#2b4d8e;box-shadow:0 0 0 2px rgba(43,77,142,.12)}
+.filter-sel{padding:7px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;
+  background:#fff;outline:none;cursor:pointer}
+
+/* Progress */
+.prog-wrap{height:3px;background:#e2e8f0;overflow:hidden;display:none}
+.prog-fill{height:100%;background:linear-gradient(90deg,#1a365d,#3b82f6);transition:width .4s}
+
+/* States */
+.loading-box{text-align:center;padding:50px}
+.spinner{width:30px;height:30px;border:3px solid #e2e8f0;border-top-color:#1a365d;
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:40px;color:#94a3b8}
+.empty-state h3{color:#64748b;margin-bottom:6px}
+.err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;
+  color:#dc2626;margin-bottom:12px}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;
+  color:#1d4ed8;margin-bottom:12px;font-size:12px}
+.warn-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;
+  color:#92400e;margin-bottom:12px}
+
+/* Footer */
+.footer{text-align:center;padding:8px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;
+  background:#fff;margin-top:10px}
+
+/* Settings panel */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:700;color:#64748b;
+  text-transform:uppercase;margin-bottom:4px}
+.form-input{width:100%;padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;
+  font-size:12px;outline:none}
+.form-input:focus{border-color:#2b4d8e}
+.settings-card{background:#fff;border-radius:9px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:12px}
+.settings-card h3{font-size:13px;font-weight:700;color:#1a365d;margin-bottom:12px;
+  padding-bottom:8px;border-bottom:1px solid #e2e8f0}
+.btn-save{background:#1a365d;color:#fff;padding:7px 16px;border:none;border-radius:7px;
+  cursor:pointer;font-size:12px;font-weight:600}
+.btn-save:hover{background:#2b4d8e}
+.danger-zone{border:1px solid #fecaca;border-radius:9px;padding:14px;margin-top:12px}
+.danger-zone h4{color:#dc2626;margin-bottom:8px;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">🛡️</div>
+    <h1>Apólice nº 10102060</h1>
+    <p>Sport Algés e Dafundo<br>Gestão Cumulativa de Atletas<br><br>Inicia sessão com a tua conta Microsoft 365 para aceder aos ficheiros do SharePoint.</p>
+    <button class="btn-login" id="btn-login" onclick="login()">
+      <svg width="20" height="20" viewBox="0 0 23 23" fill="none"><rect x="1" y="1" width="10" height="10" fill="#f25022"/><rect x="12" y="1" width="10" height="10" fill="#7fba00"/><rect x="1" y="12" width="10" height="10" fill="#00a4ef"/><rect x="12" y="12" width="10" height="10" fill="#ffb900"/></svg>
+      Entrar com Microsoft 365
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-note">Os teus dados ficam no teu browser. A app lê os PDFs da pasta <strong>AP Grupo</strong> no SharePoint.</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-title">🛡️ Apólice nº 10102060 — Acidentes Pessoais Grupo</div>
+      <div class="hdr-sub">Sport Algés e Dafundo &nbsp;·&nbsp; Gestão Cumulativa de Atletas</div>
+    </div>
+    <div class="hdr-btns">
+      <span class="user-pill" id="user-pill"></span>
+      <span id="hdr-updated" style="font-size:11px;opacity:.7"></span>
+      <button class="btn btn-white" onclick="exportAll()">📥 Exportar Tudo</button>
+      <button class="btn btn-ghost" id="btn-force" onclick="forceReprocess()" title="Apaga o histórico de processamento e relê todos os ficheiros">♻️ Forçar</button>
+      <button class="btn btn-ghost" id="btn-refresh" onclick="doRefresh()">🔄 Atualizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap" id="prog"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+<div id="status-box" style="display:none"></div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-tab act" onclick="showPanel('overview',event)">📊 Visão Geral</div>
+  <div class="nav-tab" onclick="showPanel('byact',event)">🏃 Por Atividade</div>
+  <div class="nav-tab" onclick="showPanel('changes',event)">🔄 Últimas Alterações</div>
+  <div class="nav-tab" onclick="showPanel('alerts',event)">⚠️ Alertas<span class="badge-pill" id="alert-badge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="showPanel('history',event)">📋 Histórico</div>
+  <div class="nav-tab" onclick="showPanel('settings',event)">⚙️ Configurações</div>
+</div>
+
+<!-- ═══ OVERVIEW ═══ -->
+<div class="panel act" id="panel-overview">
+  <div class="sc-row">
+    <div class="sc purple"><div class="lbl">Atividades</div><div class="val" id="ov-act">—</div></div>
+    <div class="sc blue"><div class="lbl">Total Atletas</div><div class="val" id="ov-tot">—</div></div>
+    <div class="sc green"><div class="lbl">Inclusões (último)</div><div class="val" id="ov-inc">—</div></div>
+    <div class="sc red"><div class="lbl">Exclusões (último)</div><div class="val" id="ov-exc">—</div></div>
+    <div class="sc amber"><div class="lbl">Alertas Dados</div><div class="val" id="ov-alr">—</div></div>
+  </div>
+  <div class="filter-row">
+    <input class="search-in" id="ov-search" placeholder="🔍 Pesquisar atleta (nome ou NIF)…" oninput="renderOverviewTable()">
+    <select class="filter-sel" id="ov-filter-act" onchange="renderOverviewTable()"><option value="">Todas as atividades</option></select>
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span id="ov-table-title">Lista de Atletas na Apólice</span>
+      <button class="btn btn-white" style="font-size:11px;padding:4px 10px" onclick="exportOverview()">📥 CSV</button>
+    </div>
+    <div id="ov-table-body"><div class="empty-state"><h3>Sem dados</h3><p>Entra com a tua conta Microsoft e clica em Atualizar.</p></div></div>
+  </div>
+</div>
+
+<!-- ═══ BY ACTIVITY ═══ -->
+<div class="panel" id="panel-byact">
+  <div id="byact-body"><div class="empty-state"><h3>Sem dados</h3></div></div>
+</div>
+
+<!-- ═══ CHANGES ═══ -->
+<div class="panel" id="panel-changes">
+  <div id="changes-body"><div class="empty-state"><h3>Sem alterações registadas</h3></div></div>
+</div>
+
+<!-- ═══ ALERTS ═══ -->
+<div class="panel" id="panel-alerts">
+  <div id="alerts-body"><div class="empty-state"><h3>Sem alertas</h3></div></div>
+</div>
+
+<!-- ═══ HISTORY ═══ -->
+<div class="panel" id="panel-history">
+  <div id="history-body"><div class="empty-state"><h3>Sem histórico</h3></div></div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="panel" id="panel-settings">
+  <div class="settings-card">
+    <h3>📁 Localização SharePoint</h3>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#15803d">
+      ✅ <strong>Pasta configurada:</strong> Administração Nova CB / Dep. Parceiros Comerciais / 0021194 - CM / Sport Algés e Dafundo / <strong>AP Grupo</strong>
+    </div>
+    <div class="settings-grid">
+      <div class="form-group">
+        <label>Drive ID (SharePoint)</label>
+        <input class="form-input" id="cfg-driveid" placeholder="Drive ID">
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">ID do drive SharePoint onde estão os ficheiros</div>
+      </div>
+      <div class="form-group">
+        <label>Folder ID (AP Grupo)</label>
+        <input class="form-input" id="cfg-folderid" placeholder="Folder ID">
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px">ID da pasta AP Grupo no SharePoint</div>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveSettings()">💾 Guardar e Atualizar</button>
+  </div>
+
+  <div class="settings-card">
+    <h3>🔐 Configuração Azure AD</h3>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1d4ed8">
+      ℹ️ A app usa a mesma autenticação Microsoft 365 (Azure AD) que o app Incentivos Rede 2026. Se o login não funcionar, verifica se o redirect URI desta página está registado no Azure AD:
+      <div id="redirect-uri-display" style="font-family:monospace;margin-top:6px;font-size:11px;word-break:break-all;color:#1e40af"></div>
+    </div>
+    <div class="settings-grid">
+      <div class="form-group">
+        <label>Client ID (Azure AD)</label>
+        <input class="form-input" id="cfg-clientid" placeholder="Client ID">
+      </div>
+      <div class="form-group">
+        <label>Tenant ID</label>
+        <input class="form-input" id="cfg-tenantid" placeholder="Tenant ID">
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveAuthSettings()">💾 Guardar Autenticação</button>
+  </div>
+
+  <div class="settings-card">
+    <h3>📋 Como funciona</h3>
+    <div style="line-height:1.8;color:#475569;font-size:12px">
+      <p><strong>Ponto de partida:</strong> Os PDFs mais antigos na pasta (Novembro 2025) são tratados como o estado inicial da apólice. Todos os atletas nesses ficheiros são registados como "incluídos".</p>
+      <p style="margin-top:8px"><strong>Fluxo mensal:</strong></p>
+      <ol style="padding-left:16px;margin-top:4px">
+        <li>O cliente envia novos PDFs de listagem por modalidade</li>
+        <li>Coloca os PDFs na pasta <strong>AP Grupo</strong> do SharePoint</li>
+        <li>Clica em <strong>🔄 Atualizar</strong></li>
+        <li>A app detecta os novos ficheiros e compara com o estado atual da apólice</li>
+      </ol>
+      <p style="margin-top:8px"><strong>Dados incompletos:</strong> Atletas sem Nome, Data de Nascimento ou NIF válido são rejeitados e aparecem nos <span class="tag tag-warn">⚠️ Alertas</span>.</p>
+    </div>
+  </div>
+
+  <div class="danger-zone">
+    <h4>⚠️ Zona de Perigo</h4>
+    <p style="font-size:11px;color:#64748b;margin-bottom:8px">Estas ações são irreversíveis.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-danger" onclick="resetPolicy()" style="font-size:11px">🗑️ Resetar Estado da Apólice</button>
+      <button class="btn" style="background:#f1f5f9;color:#64748b;font-size:11px" onclick="resetAll()">🗑️ Limpar Tudo</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer" id="footer">A aguardar autenticação Microsoft 365…</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIGURATION — matches Incentivos Rede 2026 app
+// ══════════════════════════════════════════════════════════════
+const DEFAULT_CLIENT_ID  = '6e166a10-9f36-4888-9a23-1734f238d2d0';
+const DEFAULT_TENANT_ID  = 'a914409c-82a2-4746-85f0-f51bd2711c33';
+const DEFAULT_DRIVE_ID   = 'b!67QCA_eBMUSbWZYZEvdU7H_SJ4Q5mOxCi9rbirRWqdnnajKPArjETb2UkYi5T6hr';
+const DEFAULT_FOLDER_ID  = '01PSMDU4GLKWOK6TEZ3VDZXIAAI24G3G6L';
+const GRAPH              = 'https://graph.microsoft.com/v1.0';
+const SCOPES             = ['Files.Read.All'];
+const POLICY_NO          = '10102060';
+const CLIENT_NAME        = 'Sport Algés e Dafundo';
+const LS_KEY             = 'apolice_sad_v3';
+
+// PDF.js worker
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+}
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let S = {
+  policy: {},
+  processedFileIds: [],
+  history: [],
+  alerts: [],
+  lastRefresh: null,
+  cfg: {
+    clientId: DEFAULT_CLIENT_ID,
+    tenantId: DEFAULT_TENANT_ID,
+    driveId:  DEFAULT_DRIVE_ID,
+    folderId: DEFAULT_FOLDER_ID
+  }
+};
+
+let msalApp = null;
+let accessToken = null;
+
+// ══════════════════════════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════════════════════════
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    S.policy           = saved.policy           || {};
+    S.processedFileIds = saved.processedFileIds || [];
+    S.history          = saved.history          || [];
+    S.alerts           = saved.alerts           || [];
+    S.lastRefresh      = saved.lastRefresh      || null;
+    if (saved.cfg) S.cfg = { ...S.cfg, ...saved.cfg };
+  } catch(e) { console.warn('loadState error', e); }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      policy: S.policy, processedFileIds: S.processedFileIds,
+      history: S.history, alerts: S.alerts,
+      lastRefresh: S.lastRefresh, cfg: S.cfg
+    }));
+  } catch(e) { console.warn('saveState error', e); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MSAL AUTHENTICATION
+// ══════════════════════════════════════════════════════════════
+function getRedirectUri() {
+  // Use current page URL (without query/hash)
+  return window.location.href.split('?')[0].split('#')[0];
+}
+
+function buildMsalConfig() {
+  return {
+    auth: {
+      clientId:    S.cfg.clientId,
+      authority:   `https://login.microsoftonline.com/${S.cfg.tenantId}`,
+      redirectUri: getRedirectUri()
+    },
+    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
+  };
+}
+
+async function initMsal() {
+  msalApp = new msal.PublicClientApplication(buildMsalConfig());
+  // Show current redirect URI in settings
+  const uriEl = document.getElementById('redirect-uri-display');
+  if (uriEl) uriEl.textContent = getRedirectUri();
+
+  // Try silent sign-in first
+  const accounts = msalApp.getAllAccounts();
+  if (accounts.length > 0) {
+    try {
+      const result = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+      accessToken = result.accessToken;
+      onAuthenticated(accounts[0]);
+      return;
+    } catch(e) { /* silent failed, need interactive */ }
+  }
+  // Show login overlay
+  document.getElementById('login-overlay').style.display = 'flex';
+}
+
+async function login() {
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-err');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;margin:0"></div> A autenticar…';
+  errEl.style.display = 'none';
+  try {
+    const result = await msalApp.loginPopup({ scopes: SCOPES });
+    accessToken = result.accessToken;
+    onAuthenticated(result.account);
+  } catch(e) {
+    console.error('Login error', e);
+    errEl.textContent = '❌ ' + (e.message || 'Erro na autenticação. Verifica as configurações.');
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 23 23" fill="none"><rect x="1" y="1" width="10" height="10" fill="#f25022"/><rect x="12" y="1" width="10" height="10" fill="#7fba00"/><rect x="1" y="12" width="10" height="10" fill="#00a4ef"/><rect x="12" y="12" width="10" height="10" fill="#ffb900"/></svg> Entrar com Microsoft 365';
+  }
+}
+
+function onAuthenticated(account) {
+  document.getElementById('login-overlay').style.display = 'none';
+  const pill = document.getElementById('user-pill');
+  if (pill) { pill.textContent = account.username || account.name; pill.style.display = 'block'; }
+  loadState();
+  renderAll();
+  doRefresh();
+}
+
+async function getToken() {
+  const accounts = msalApp.getAllAccounts();
+  if (!accounts.length) throw new Error('Não autenticado');
+  try {
+    const result = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+    return result.accessToken;
+  } catch {
+    const result = await msalApp.acquireTokenPopup({ scopes: SCOPES, account: accounts[0] });
+    return result.accessToken;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MICROSOFT GRAPH API
+// ══════════════════════════════════════════════════════════════
+async function graphGet(url) {
+  const token = await getToken();
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) throw new Error(`Graph API error ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function listFolder(folderId) {
+  const driveId = S.cfg.driveId;
+  const url = `${GRAPH}/drives/${driveId}/items/${folderId}/children` +
+    `?$select=id,name,lastModifiedDateTime,size,file&$top=100`;
+  const data = await graphGet(url);
+  return data.value || [];
+}
+
+async function dlFile(fileId) {
+  const token = await getToken();
+  const url = `${GRAPH}/drives/${S.cfg.driveId}/items/${fileId}/content`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) throw new Error(`Download error ${r.status}`);
+  return r.arrayBuffer();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PDF TEXT EXTRACTION
+// ══════════════════════════════════════════════════════════════
+async function extractPdfText(buffer) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js não carregou');
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // Join items — use spaces, let parseAthletes handle the 2+ space grouping
+    const pageText = content.items.map(item => item.str).join('  ');
+    text += pageText + '\n';
+  }
+  return text;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILENAME PARSING
+// ══════════════════════════════════════════════════════════════
+const MONTH_PT = {
+  janeiro:'01',fevereiro:'02','março':'03',marco:'03',abril:'04',
+  maio:'05',junho:'06',julho:'07',agosto:'08',
+  setembro:'09',outubro:'10',novembro:'11',dezembro:'12'
+};
+
+function extractActivity(name) {
+  const base = name.replace(/\.[^.]+$/,'').replace(/^Listagem_/i,'').replace(/_SAD$/i,'');
+  const parts = base.split(/[_\s]+/);
+  // Skip date parts (numeric) and return first alphabetic segment
+  const alphaOnly = /^[A-Za-zÀ-ÿçãõáéíóúâêîôûàèìòùü]+$/;
+  const found = parts.find(p => alphaOnly.test(p) && p.length >= 3);
+  if (found) return found;
+  // Fallback: return first part without date
+  return parts.find(p => !/^\d+$/.test(p)) || parts[0] || name;
+}
+
+function extractDate(name, fallback) {
+  const base = name.replace(/\.[^.]+$/,'');
+  const m1 = base.match(/(\d{2})_(\d{2})_(\d{4})/);
+  if (m1) return new Date(`${m1[3]}-${m1[2]}-${m1[1]}`);
+  const m2 = base.match(/(\d{4})[\-_](\d{2})[\-_](\d{2})/);
+  if (m2) return new Date(`${m2[1]}-${m2[2]}-${m2[3]}`);
+  for (const [m, n] of Object.entries(MONTH_PT)) {
+    if (new RegExp(m,'i').test(base)) {
+      const my = base.match(/(\d{4})/);
+      if (my) return new Date(`${my[1]}-${n}-01`);
+    }
+  }
+  return fallback ? new Date(fallback) : new Date();
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'}); }
+  catch { return iso; }
+}
+
+function fmtShort(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleDateString('pt-PT'); } catch { return iso; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PDF ATHLETE PARSING
+// ══════════════════════════════════════════════════════════════
+function parseAthletes(text) {
+  let clean = text
+    .replace(/\bNome\b\s+\bSexo\b[\s\S]{0,40}?\bNIF\b/ig,'')
+    .replace(/\bNome\b[\s\S]{0,40}?\bNIF\b[\s\S]{0,15}?\bSexo\b/ig,'')
+    .replace(/Arquivandus[\s\S]*$/i,'')
+    .replace(/\bUtentes\b[\s\S]*$/i,'')
+    .replace(/\bPágina\s+\d+/ig,'')
+    .replace(/\bPage\s+\d+/ig,'')
+    .trim();
+
+  const parts = clean.split(/\s{2,}/).map(p=>p.trim()).filter(Boolean);
+  const dateRe   = /^\d{4}-\d{2}-\d{2}$/;
+  const nifRe    = /^\d{9}$/;
+  const genderRe = /^[FMfm]$/;
+  const athletes = [];
+  let i = 0;
+
+  while (i < parts.length) {
+    let nifIdx = -1;
+    for (let j=i; j<Math.min(i+10,parts.length); j++) {
+      if (nifRe.test(parts[j])) { nifIdx=j; break; }
+    }
+    if (nifIdx < 0) { i++; continue; }
+
+    const chunk = parts.slice(i, nifIdx+1);
+    const name   = chunk.filter(p=>!dateRe.test(p)&&!nifRe.test(p)&&!genderRe.test(p)).join(' ').trim();
+    const date   = chunk.find(p=>dateRe.test(p))   || '';
+    const nif    = chunk.find(p=>nifRe.test(p))    || '';
+    const gender = chunk.find(p=>genderRe.test(p)) || '';
+
+    if (nif) athletes.push({ nome: name, nif, dataNasc: date, sexo: gender.toUpperCase() });
+    i = nifIdx+1;
+  }
+  return athletes;
+}
+
+// ══════════════════════════════════════════════════════════════
+// VALIDATION
+// ══════════════════════════════════════════════════════════════
+const NIF_RE  = /^\d{9}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function validateAthlete(a) {
+  const issues = [];
+  if (!a.nome || a.nome.trim().length < 2) issues.push('Nome em falta');
+  if (!NIF_RE.test(a.nif))  issues.push('NIF inválido');
+  if (!DATE_RE.test(a.dataNasc)) issues.push('Data de nascimento em falta');
+  return issues;
+}
+
+// ══════════════════════════════════════════════════════════════
+// POLICY MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+function processNewFile(activity, filename, fileDate, allAthletes) {
+  const valid = [], invalid = [];
+  for (const a of allAthletes) {
+    const issues = validateAthlete(a);
+    if (issues.length) invalid.push({...a, issues, activity, filename});
+    else valid.push(a);
+  }
+  for (const a of invalid) S.alerts.push(a);
+
+  const current = S.policy[activity] ? [...S.policy[activity].athletes] : null;
+  let included = [], excluded = [];
+
+  if (!current) {
+    included = valid;
+    excluded = [];
+  } else {
+    const currNifs = new Set(current.map(a=>a.nif));
+    const newNifs  = new Set(valid.map(a=>a.nif));
+    included = valid.filter(a => !currNifs.has(a.nif));
+    excluded = current.filter(a => !newNifs.has(a.nif));
+  }
+
+  S.policy[activity] = { athletes: valid, lastFile: filename, lastDate: fileDate };
+
+  S.history.unshift({
+    id: Date.now() + '_' + Math.random().toString(36).slice(2),
+    date: new Date().toISOString(),
+    activity, filename, fileDate,
+    included, excluded,
+    alerts: invalid,
+    isFirstFile: !current
+  });
+
+  return { included, excluded, invalid };
+}
+
+// ══════════════════════════════════════════════════════════════
+// MAIN REFRESH — uses Graph API directly
+// ══════════════════════════════════════════════════════════════
+function setProgress(pct) {
+  const bar = document.getElementById('prog');
+  const fill = document.getElementById('prog-fill');
+  if (bar) bar.style.display = pct >= 100 ? 'none' : 'block';
+  if (fill) fill.style.width = pct + '%';
+}
+
+function setStatus(msg, type='info') {
+  const el = document.getElementById('status-box');
+  if (!el) return;
+  const colors = { info:'#eff6ff|#1d4ed8', ok:'#f0fdf4|#15803d', warn:'#fffbeb|#92400e', error:'#fef2f2|#dc2626' };
+  const [bg, color] = (colors[type]||colors.info).split('|');
+  el.style.cssText = `background:${bg};border:1px solid;border-color:${color}40;border-radius:7px;padding:9px 14px;margin:10px 18px 0;font-size:12px;color:${color};display:block`;
+  el.textContent = msg;
+}
+
+function forceReprocess() {
+  if (!confirm('Vai apagar o histórico de processamento e reler TODOS os ficheiros. Confirma?')) return;
+  S.processedFileIds = [];
+  S.policy = {};
+  S.history = [];
+  S.alerts = [];
+  saveState();
+  doRefresh();
+}
+
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  const btnF = document.getElementById('btn-force');
+  if (btn) btn.disabled = true;
+  if (btnF) btnF.disabled = true;
+  setProgress(5);
+  setStatus('A ligar ao SharePoint via Microsoft Graph…');
+
+  try {
+    // 1. List files in AP Grupo folder
+    setProgress(15);
+    setStatus('A listar ficheiros na pasta AP Grupo…');
+    const allFiles = await listFolder(S.cfg.folderId);
+
+    // 2. Filter for PDF files only
+    const pdfFiles = allFiles.filter(f => f.name && f.name.toLowerCase().endsWith('.pdf'));
+    setStatus(`Encontrados ${pdfFiles.length} PDF(s) na pasta AP Grupo. A verificar novos…`);
+    setProgress(25);
+
+    if (pdfFiles.length === 0) {
+      setStatus('Nenhum PDF encontrado na pasta AP Grupo. Confirma que a pasta está correcta nas Configurações.', 'warn');
+      S.lastRefresh = new Date().toISOString();
+      saveState(); renderAll(); setProgress(100);
+      if (btn) btn.disabled = false;
+      if (btnF) btnF.disabled = false;
+      return;
+    }
+
+    // 3. Find unprocessed files
+    const processedSet = new Set(S.processedFileIds);
+    const newFiles = pdfFiles.filter(f => !processedSet.has(f.id));
+
+    if (newFiles.length === 0) {
+      setStatus(`${pdfFiles.length} PDF(s) encontrado(s) — todos já processados. Usa ♻️ Forçar para reler tudo.`, 'ok');
+      S.lastRefresh = new Date().toISOString();
+      saveState(); renderAll(); setProgress(100);
+      if (btn) btn.disabled = false;
+      if (btnF) btnF.disabled = false;
+      return;
+    }
+
+    // 4. Sort chronologically (oldest first → correct policy build order)
+    newFiles.sort((a,b) => {
+      const da = extractDate(a.name, a.lastModifiedDateTime);
+      const db = extractDate(b.name, b.lastModifiedDateTime);
+      return da - db;
+    });
+
+    // 5. Process each new PDF
+    let done = 0, errors = 0;
+    for (const f of newFiles) {
+      setProgress(25 + Math.round((done / newFiles.length) * 68));
+      setStatus(`A processar (${done+1}/${newFiles.length}): ${f.name}…`);
+      try {
+        const buffer   = await dlFile(f.id);
+        const text     = await extractPdfText(buffer);
+        const athletes = parseAthletes(text);
+        const activity = extractActivity(f.name);
+        const fdate    = extractDate(f.name, f.lastModifiedDateTime).toISOString();
+
+        if (athletes.length === 0) {
+          console.warn('No athletes parsed from', f.name, '— text sample:', text.slice(0, 300));
+        }
+
+        processNewFile(activity, f.name, fdate, athletes);
+        S.processedFileIds.push(f.id);
+      } catch(e) {
+        console.warn('Error processing', f.name, e);
+        errors++;
+      }
+      done++;
+    }
+
+    const totalAthletes = Object.values(S.policy).reduce((s,d)=>s+d.athletes.length, 0);
+    const msg = `✅ Processados ${done} ficheiro(s) • ${Object.keys(S.policy).length} atividades • ${totalAthletes} atletas na apólice` +
+      (errors ? ` • ⚠️ ${errors} erro(s)` : '');
+    setStatus(msg, errors ? 'warn' : 'ok');
+
+    S.lastRefresh = new Date().toISOString();
+    setProgress(100);
+    saveState(); renderAll();
+
+  } catch(e) {
+    console.error(e);
+    setStatus('❌ ' + (e.message || String(e)), 'error');
+    setProgress(100);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnF) btnF.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showPanel(id, e) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('act'));
+  const panel = document.getElementById('panel-'+id);
+  if (panel) panel.classList.add('act');
+  if (e && e.currentTarget) e.currentTarget.classList.add('act');
+}
+
+function updateAlertBadge() {
+  const n = S.alerts.length;
+  const b = document.getElementById('alert-badge');
+  if (b) { b.textContent = n; b.style.display = n ? 'inline' : 'none'; }
+  const el = document.getElementById('ov-alr');
+  if (el) el.textContent = n || '—';
+}
+
+// ── Overview ──────────────────────────────────────────────────
+function renderOverviewTable() {
+  const q   = (document.getElementById('ov-search')?.value||'').toLowerCase();
+  const act = document.getElementById('ov-filter-act')?.value || '';
+
+  let rows = [];
+  for (const [activity, data] of Object.entries(S.policy)) {
+    for (const a of data.athletes) rows.push({...a, activity});
+  }
+
+  if (q)   rows = rows.filter(r => r.nome.toLowerCase().includes(q) || r.nif.includes(q));
+  if (act) rows = rows.filter(r => r.activity === act);
+
+  rows.sort((a,b) => a.activity.localeCompare(b.activity) || a.nome.localeCompare(b.nome));
+
+  document.getElementById('ov-table-title').textContent = `Lista de Atletas na Apólice (${rows.length})`;
+
+  if (!rows.length) {
+    document.getElementById('ov-table-body').innerHTML =
+      '<div class="empty-state"><p>Nenhum atleta encontrado.</p></div>';
+    return;
+  }
+
+  let html = `<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>#</th><th>Nome</th><th>NIF</th><th>Data Nasc.</th><th>Sexo</th><th>Atividade</th></tr></thead><tbody>`;
+  rows.forEach((r,i) => {
+    html += `<tr><td style="color:#94a3b8;font-size:11px">${i+1}</td>
+      <td><strong>${esc(r.nome)}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${esc(r.nif)}</td>
+      <td>${esc(r.dataNasc)}</td>
+      <td style="text-align:center">${esc(r.sexo)}</td>
+      <td><span class="tag tag-grey">${esc(r.activity)}</span></td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('ov-table-body').innerHTML = html;
+}
+
+function renderOverviewSummary() {
+  const acts = Object.keys(S.policy);
+  const totAthletes = Object.values(S.policy).reduce((s,d)=>s+d.athletes.length, 0);
+  const last = S.history[0];
+  document.getElementById('ov-act').textContent = acts.length || '—';
+  document.getElementById('ov-tot').textContent = totAthletes || '—';
+  document.getElementById('ov-inc').textContent = last ? last.included.length : '—';
+  document.getElementById('ov-exc').textContent = last ? last.excluded.length : '—';
+
+  const sel = document.getElementById('ov-filter-act');
+  if (sel) {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Todas as atividades</option>';
+    acts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = a;
+      if (a === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+// ── By Activity ───────────────────────────────────────────────
+function renderByActivity() {
+  const el = document.getElementById('byact-body');
+  const acts = Object.entries(S.policy);
+  if (!acts.length) {
+    el.innerHTML = '<div class="empty-state"><h3>Sem dados</h3><p>Carregue ficheiros no SharePoint e clique em Atualizar.</p></div>';
+    return;
+  }
+
+  let html = '<div class="act-cards">';
+  for (const [act, data] of acts) {
+    const lastH = S.history.find(h=>h.activity===act);
+    html += `<div class="act-card">
+      <div class="act-card-hdr">
+        <div class="name">🏃 ${esc(act)}</div>
+        <div class="meta">Último ficheiro: ${esc(data.lastFile)}</div>
+      </div>
+      <div class="act-card-body">
+        <div class="act-stat"><span class="act-stat-lbl">Atletas na apólice</span><span class="act-stat-val" style="color:#1a365d">${data.athletes.length}</span></div>
+        ${lastH ? `
+        <div class="act-stat"><span class="act-stat-lbl">Última inclusão</span><span class="act-stat-val" style="color:#16a34a">+${lastH.included.length}</span></div>
+        <div class="act-stat"><span class="act-stat-lbl">Última exclusão</span><span class="act-stat-val" style="color:#dc2626">-${lastH.excluded.length}</span></div>` : ''}
+        <div class="act-stat"><span class="act-stat-lbl">Atualizado em</span><span class="act-stat-val">${fmtShort(data.lastDate)}</span></div>
+      </div>
+    </div>`;
+  }
+  html += '</div><div style="margin-top:16px">';
+
+  for (const [act, data] of acts) {
+    html += `<div class="tbl-wrap">
+      <div class="tbl-title"><span>🏃 ${esc(act)} — ${data.athletes.length} atletas</span>
+        <button class="btn btn-white" style="font-size:11px;padding:4px 10px" onclick="exportActivity('${esc(act)}')">📥 CSV</button>
+      </div>
+      <div style="overflow-x:auto"><table class="tbl">
+        <thead><tr><th>#</th><th>Nome</th><th>NIF</th><th>Data Nasc.</th><th>Sexo</th></tr></thead><tbody>`;
+    data.athletes.forEach((a,i) => {
+      html += `<tr><td style="color:#94a3b8;font-size:11px">${i+1}</td>
+        <td><strong>${esc(a.nome)}</strong></td>
+        <td style="font-family:monospace;font-size:12px">${esc(a.nif)}</td>
+        <td>${esc(a.dataNasc)}</td>
+        <td style="text-align:center">${esc(a.sexo)}</td></tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── Changes ───────────────────────────────────────────────────
+function renderChanges() {
+  const el = document.getElementById('changes-body');
+  if (!S.history.length) {
+    el.innerHTML = '<div class="empty-state"><h3>Sem alterações registadas</h3><p>Ainda não foram processados ficheiros.</p></div>';
+    return;
+  }
+  let html = '';
+  for (const ev of S.history.slice(0,10)) {
+    const hasChanges = ev.included.length || ev.excluded.length;
+    html += `<div class="tbl-wrap">
+      <div class="tbl-title" style="flex-direction:column;align-items:flex-start">
+        <div style="display:flex;justify-content:space-between;width:100%">
+          <strong>🏃 ${esc(ev.activity)} — ${esc(ev.filename)}</strong>
+          <span style="font-size:11px;color:#94a3b8">${fmtShort(ev.date)}</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+          ${ev.isFirstFile ? '<span class="tag tag-grey">Ficheiro inicial</span>' : ''}
+          ${ev.included.length ? `<span class="tag tag-in">+${ev.included.length} inclusão${ev.included.length>1?'ões':''}</span>` : ''}
+          ${ev.excluded.length ? `<span class="tag tag-ex">-${ev.excluded.length} exclusão${ev.excluded.length>1?'ões':''}</span>` : ''}
+          ${ev.alerts.length ? `<span class="tag tag-warn">⚠️ ${ev.alerts.length} alerta${ev.alerts.length>1?'s':''}</span>` : ''}
+          ${!hasChanges && !ev.isFirstFile ? '<span class="tag tag-ok">Sem alterações</span>' : ''}
+        </div>
+      </div>`;
+
+    if (ev.isFirstFile && ev.included.length) {
+      html += `<div style="padding:8px 14px;font-size:11px;font-weight:700;color:#1d4ed8;background:#eff6ff;border-bottom:1px solid #e2e8f0">📋 LISTA INICIAL (${ev.included.length})</div>
+        <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nome</th><th>NIF</th><th>Data Nasc.</th><th>Sexo</th></tr></thead><tbody>`;
+      ev.included.forEach(a => {
+        html += `<tr><td><strong>${esc(a.nome)}</strong></td>
+          <td style="font-family:monospace;font-size:12px">${esc(a.nif)}</td>
+          <td>${esc(a.dataNasc)}</td><td style="text-align:center">${esc(a.sexo)}</td></tr>`;
+      });
+      html += '</tbody></table></div>';
+    }
+    if (!ev.isFirstFile && ev.included.length) {
+      html += `<div style="padding:8px 14px;font-size:11px;font-weight:700;color:#15803d;background:#f0fdf4;border-bottom:1px solid #e2e8f0">✚ INCLUSÕES (${ev.included.length})</div>
+        <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nome</th><th>NIF</th><th>Data Nasc.</th><th>Sexo</th></tr></thead><tbody>`;
+      ev.included.forEach(a => {
+        html += `<tr class="inc"><td><strong>${esc(a.nome)}</strong></td>
+          <td style="font-family:monospace;font-size:12px">${esc(a.nif)}</td>
+          <td>${esc(a.dataNasc)}</td><td style="text-align:center">${esc(a.sexo)}</td></tr>`;
+      });
+      html += '</tbody></table></div>';
+    }
+    if (ev.excluded.length) {
+      html += `<div style="padding:8px 14px;font-size:11px;font-weight:700;color:#dc2626;background:#fef2f2;border-bottom:1px solid #e2e8f0;border-top:1px solid #e2e8f0">✖ EXCLUSÕES (${ev.excluded.length})</div>
+        <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nome</th><th>NIF</th><th>Data Nasc.</th><th>Sexo</th></tr></thead><tbody>`;
+      ev.excluded.forEach(a => {
+        html += `<tr class="exc"><td><strong>${esc(a.nome)}</strong></td>
+          <td style="font-family:monospace;font-size:12px">${esc(a.nif)}</td>
+          <td>${esc(a.dataNasc)}</td><td style="text-align:center">${esc(a.sexo)}</td></tr>`;
+      });
+      html += '</tbody></table></div>';
+    }
+    if (!hasChanges && !ev.isFirstFile) {
+      html += `<div style="text-align:center;padding:14px;color:#94a3b8;font-size:12px">✅ Nenhuma alteração neste ficheiro.</div>`;
+    }
+    html += `<div style="padding:8px 14px;border-top:1px solid #e2e8f0">
+      <button onclick="exportEvent('${esc(ev.id)}')" style="background:#1a365d;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">📥 Exportar CSV</button>
+    </div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── Alerts ────────────────────────────────────────────────────
+function renderAlerts() {
+  const el = document.getElementById('alerts-body');
+  if (!S.alerts.length) {
+    el.innerHTML = '<div class="empty-state"><h3>✅ Sem alertas</h3><p>Todos os atletas processados têm dados completos.</p></div>';
+    return;
+  }
+  let html = `<div class="warn-box">⚠️ ${S.alerts.length} atleta${S.alerts.length>1?'s foram':'foi'} rejeitado${S.alerts.length>1?'s':''} por dados incompletos.</div>
+    <div class="tbl-wrap">
+    <div class="tbl-title"><span>Atletas com Dados Incompletos (${S.alerts.length})</span>
+      <button class="btn btn-white" style="font-size:11px;padding:4px 10px" onclick="exportAlerts()">📥 CSV</button>
+    </div>
+    <div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Atividade</th><th>Nome</th><th>NIF</th><th>Data Nasc.</th><th>Sexo</th><th>Problema</th><th>Ficheiro</th></tr></thead><tbody>`;
+  S.alerts.forEach(a => {
+    html += `<tr class="alert">
+      <td><span class="tag tag-grey">${esc(a.activity||'—')}</span></td>
+      <td>${esc(a.nome)||'<em style="color:#94a3b8">Em falta</em>'}</td>
+      <td style="font-family:monospace;font-size:12px">${esc(a.nif)||'—'}</td>
+      <td>${esc(a.dataNasc)||'—'}</td>
+      <td style="text-align:center">${esc(a.sexo)||'—'}</td>
+      <td style="color:#d97706;font-size:11px">${(a.issues||[]).join(', ')}</td>
+      <td style="font-size:11px;color:#94a3b8;max-width:140px;overflow:hidden;text-overflow:ellipsis">${esc(a.filename||'—')}</td></tr>`;
+  });
+  html += '</tbody></table></div></div>';
+  el.innerHTML = html;
+}
+
+// ── History ───────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('history-body');
+  if (!S.history.length) {
+    el.innerHTML = '<div class="empty-state"><h3>Sem histórico</h3><p>O histórico aparece aqui após processar ficheiros.</p></div>';
+    return;
+  }
+  let html = `<div class="info-box">📋 ${S.history.length} evento${S.history.length>1?'s':''} registado${S.history.length>1?'s':''}. ${S.processedFileIds.length} ficheiro${S.processedFileIds.length>1?'s':''} processado${S.processedFileIds.length>1?'s':''}.</div>`;
+  S.history.forEach((ev,i) => {
+    html += `<div class="hist-item">
+      <div class="hist-hdr" onclick="toggleHist(${i})">
+        <div>
+          <strong>🏃 ${esc(ev.activity)}</strong>
+          <span style="color:#94a3b8;margin-left:8px;font-size:11px">${esc(ev.filename)}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${ev.isFirstFile?'<span class="tag tag-grey">Inicial</span>':''}
+          ${ev.included.length?`<span class="tag tag-in">+${ev.included.length}</span>`:''}
+          ${ev.excluded.length?`<span class="tag tag-ex">-${ev.excluded.length}</span>`:''}
+          ${ev.alerts.length?`<span class="tag tag-warn">⚠️${ev.alerts.length}</span>`:''}
+          <span style="font-size:11px;color:#94a3b8">${fmtShort(ev.date)}</span>
+          <span style="color:#94a3b8">▼</span>
+        </div>
+      </div>
+      <div class="hist-body" id="hist-${i}">
+        <p style="color:#64748b;font-size:12px">
+          Processado: ${fmtDate(ev.date)}<br>
+          Data ficheiro: ${fmtShort(ev.fileDate)}<br>
+          ${ev.isFirstFile ? 'Ficheiro inicial — base da apólice' : `Inclusões: ${ev.included.length} | Exclusões: ${ev.excluded.length}`}
+        </p>
+        <div style="margin-top:8px">
+          <button onclick="exportEvent('${esc(ev.id)}')" style="background:#1a365d;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">📥 CSV</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function toggleHist(i) {
+  const el = document.getElementById('hist-'+i);
+  if (el) el.className = el.className.includes('open') ? 'hist-body' : 'hist-body open';
+}
+
+// ── Settings ──────────────────────────────────────────────────
+function saveSettings() {
+  S.cfg.driveId  = document.getElementById('cfg-driveid').value.trim()  || DEFAULT_DRIVE_ID;
+  S.cfg.folderId = document.getElementById('cfg-folderid').value.trim() || DEFAULT_FOLDER_ID;
+  saveState();
+  doRefresh();
+}
+
+function saveAuthSettings() {
+  S.cfg.clientId = document.getElementById('cfg-clientid').value.trim() || DEFAULT_CLIENT_ID;
+  S.cfg.tenantId = document.getElementById('cfg-tenantid').value.trim() || DEFAULT_TENANT_ID;
+  saveState();
+  // Reinit MSAL with new settings
+  msalApp = new msal.PublicClientApplication(buildMsalConfig());
+  alert('Configuração de autenticação guardada. Pode ser necessário fazer login novamente.');
+}
+
+function syncSettingsUI() {
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+  set('cfg-driveid',   S.cfg.driveId);
+  set('cfg-folderid',  S.cfg.folderId);
+  set('cfg-clientid',  S.cfg.clientId);
+  set('cfg-tenantid',  S.cfg.tenantId);
+  const uriEl = document.getElementById('redirect-uri-display');
+  if (uriEl) uriEl.textContent = getRedirectUri();
+}
+
+function resetPolicy() {
+  if (!confirm('Vai apagar o estado actual da apólice e o histórico de processamento. Confirma?')) return;
+  S.policy = {}; S.processedFileIds = []; S.history = []; S.alerts = [];
+  saveState(); renderAll();
+}
+
+function resetAll() {
+  if (!confirm('Vai apagar TUDO, incluindo configurações. Confirma?')) return;
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORTS
+// ══════════════════════════════════════════════════════════════
+function dlCSV(filename, rows) {
+  const BOM = '﻿';
+  const csv = BOM + rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportActivity(act) {
+  const data = S.policy[act]; if (!data) return;
+  const rows = [
+    [`Apólice nº ${POLICY_NO} — ${CLIENT_NAME}`],
+    [`Atividade: ${act}`], [`Data: ${new Date().toLocaleDateString('pt-PT')}`],
+    [`Total atletas: ${data.athletes.length}`], [],
+    ['Nome','NIF','Data Nasc.','Sexo'],
+    ...data.athletes.map(a=>[a.nome,a.nif,a.dataNasc,a.sexo])
+  ];
+  dlCSV(`Apólice_${POLICY_NO}_${act}_${new Date().toISOString().slice(0,10)}.csv`, rows);
+}
+
+function exportOverview() {
+  const rows = [[`Apólice nº ${POLICY_NO} — ${CLIENT_NAME}`],
+    [`Data: ${new Date().toLocaleDateString('pt-PT')}`],[],
+    ['Atividade','Nome','NIF','Data Nasc.','Sexo']];
+  for (const [act,data] of Object.entries(S.policy))
+    data.athletes.forEach(a=>rows.push([act,a.nome,a.nif,a.dataNasc,a.sexo]));
+  dlCSV(`Apólice_${POLICY_NO}_Todos_${new Date().toISOString().slice(0,10)}.csv`, rows);
+}
+
+function exportEvent(evId) {
+  const ev = S.history.find(h=>h.id===evId); if (!ev) return;
+  const rows = [[`Apólice nº ${POLICY_NO} — ${CLIENT_NAME}`],
+    [`Atividade: ${ev.activity}`],[`Ficheiro: ${ev.filename}`],
+    [`Processado: ${new Date(ev.date).toLocaleDateString('pt-PT')}`],[]];
+  if (ev.included.length)
+    rows.push(['=== INCLUSÕES ==='],['Nome','NIF','Data Nasc.','Sexo'],
+      ...ev.included.map(a=>[a.nome,a.nif,a.dataNasc,a.sexo]),[]);
+  if (ev.excluded.length)
+    rows.push(['=== EXCLUSÕES ==='],['Nome','NIF','Data Nasc.','Sexo'],
+      ...ev.excluded.map(a=>[a.nome,a.nif,a.dataNasc,a.sexo]),[]);
+  dlCSV(`Alterações_${ev.activity}_${new Date().toISOString().slice(0,10)}.csv`, rows);
+}
+
+function exportAlerts() {
+  const rows = [[`Alertas de Dados — Apólice nº ${POLICY_NO}`],[],
+    ['Atividade','Nome','NIF','Data Nasc.','Sexo','Problemas','Ficheiro'],
+    ...S.alerts.map(a=>[a.activity,a.nome,a.nif,a.dataNasc,a.sexo,(a.issues||[]).join('; '),a.filename])];
+  dlCSV(`Alertas_Dados_${new Date().toISOString().slice(0,10)}.csv`, rows);
+}
+
+function exportAll() {
+  const rows = [[`Apólice nº ${POLICY_NO} — ${CLIENT_NAME} — Relatório Completo`],
+    [`Data: ${new Date().toLocaleDateString('pt-PT')}`],[]];
+  for (const [act,data] of Object.entries(S.policy)) {
+    rows.push([`=== ${act.toUpperCase()} (${data.athletes.length} atletas) ===`],
+      ['Nome','NIF','Data Nasc.','Sexo'],
+      ...data.athletes.map(a=>[a.nome,a.nif,a.dataNasc,a.sexo]),[]);
+  }
+  if (S.alerts.length) {
+    rows.push(['=== ALERTAS ==='],['Atividade','Nome','NIF','Data Nasc.','Problemas'],
+      ...S.alerts.map(a=>[a.activity,a.nome,a.nif,a.dataNasc,(a.issues||[]).join('; ')]));
+  }
+  dlCSV(`Apólice_${POLICY_NO}_Completo_${new Date().toISOString().slice(0,10)}.csv`, rows);
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════════════════════
+function renderAll() {
+  const f = document.getElementById('footer');
+  const u = document.getElementById('hdr-updated');
+  if (S.lastRefresh) {
+    const t = new Date(S.lastRefresh).toLocaleString('pt-PT');
+    if (f) f.textContent = `Última atualização: ${t}`;
+    if (u) u.textContent = t;
+  }
+  syncSettingsUI();
+  updateAlertBadge();
+  renderOverviewSummary();
+  renderOverviewTable();
+  renderByActivity();
+  renderChanges();
+  renderAlerts();
+  renderHistory();
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+(async function init() {
+  loadState();
+  renderAll();
+  await initMsal();
+})();
+</script>
+</body>
+</html>
